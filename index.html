@@ -15,7 +15,7 @@
         <form id="postForm" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2 id="formTitle">สร้างโพสต์ใหม่</h2>
-                <button type="button" id="logoutBtn" style="background: #6b7280; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">ออกจากระบบ</button>
+                <button type="button" id="logoutBtn" onclick="handleLogout()" style="background: #6b7280; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">ออกจากระบบ</button>
             </div>
             
             <div class="form-group">
@@ -56,7 +56,7 @@
 
         <!-- ส่วนเข้าสู่ระบบสำหรับเจ้าของเว็บ (อยู่ท้ายสุด) -->
         <div id="loginSection" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e7e5e4; text-align: center;">
-            <button id="showLoginBtn" style="background: none; border: none; color: #a8a29e; cursor: pointer; font-size: 12px;">จัดการโพสต์ (สำหรับ Admin)</button>
+            <button type="button" id="showLoginBtn" onclick="toggleLoginForm()" style="background: none; border: none; color: #a8a29e; cursor: pointer; font-size: 12px; text-decoration: underline;">จัดการโพสต์ (สำหรับ Admin)</button>
             <form id="loginForm" style="display: none; max-width: 300px; margin: 15px auto; text-align: left;">
                 <div class="form-group">
                     <input type="email" id="adminEmail" placeholder="อีเมล Admin" required>
