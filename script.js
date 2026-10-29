@@ -14,6 +14,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 100);
 
+    // ปุ่มสลับฟอร์มล็อกอิน
+    const showLoginBtn = document.getElementById('showLoginBtn');
+    if (showLoginBtn) {
+        showLoginBtn.addEventListener('click', () => {
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.style.display = (loginForm.style.display === 'none' || loginForm.style.display === '') ? 'block' : 'none';
+            }
+        });
+    }
+
+    // ปุ่มออกจากระบบ
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
     // ผูก Event Submit
     const postForm = document.getElementById('postForm');
     if (postForm) {
@@ -25,18 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loginForm.addEventListener('submit', handleLogin);
     }
 });
-
-// ฟังก์ชันสลับแสดง/ซ่อนฟอร์มล็อกอิน
-function toggleLoginForm() {
-    const loginForm = document.getElementById('loginForm');
-    if (loginForm) {
-        if (loginForm.style.display === 'none' || loginForm.style.display === '') {
-            loginForm.style.display = 'block';
-        } else {
-            loginForm.style.display = 'none';
-        }
-    }
-}
 
 // ปรับการแสดงผล UI ตามสถานะล็อกอิน
 function updateUIVisibility(user) {
