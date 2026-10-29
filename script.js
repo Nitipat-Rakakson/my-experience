@@ -1,19 +1,93 @@
-let editingPostId = null; // ตัวแปรเก็บ ID โพสต์ที่กำลังแก้ไข
+let editingPostId = null;
+let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // โหลดข้อมูลบทความจาก Cloud เมื่อเปิดหน้าเว็บ
+    // ตรวจสอบสถานะการล็อกอิน
     setTimeout(() => {
-        loadPostsFromCloud();
+        if (window.fb && window.auth) {
+            window.fb.onAuthStateChanged(window.auth, (user) => {
+                currentUser = user;
+                updateUIVisibility(user);
+                loadPostsFromCloud();
+            });
+        }
     }, 500);
 
-    // ดักจับการกดปุ่มส่งฟอร์ม
+    // ผูก Event ฟอร์มโพสต์
     const postForm = document.getElementById('postForm');
     if (postForm) {
         postForm.addEventListener('submit', handlePostSubmit);
     }
+
+    // ผูก Event เข้าสู่ระบบ
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    // ปุ่มแสดงฟอร์มล็อกอิน
+    const showLoginBtn = document.getElementById('showLoginBtn');
+    if (showLoginBtn) {
+        showLoginBtn.addEventListener('click', () => {
+            const loginForm = document.getElementById('loginForm');
+            loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+
+    // ปุ่มออกจากระบบ
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
 });
 
-// ฟังก์ชันดึงโพสต์ทั้งหมดจาก Cloud
+// ปรับการแสดงผล UI ตามสถานะล็อกอิน
+function updateUIVisibility(user) {
+    const postForm = document.getElementById('postForm');
+    const formHr = document.getElementById('formHr');
+    const loginSection = document.getElementById('loginSection');
+
+    if (user) {
+        // ถ้าเป็น Admin (ล็อกอินแล้ว)
+        if (postForm) postForm.style.display = 'block';
+        if (formHr) formHr.style.display = 'block';
+        if (loginSection) loginSection.style.display = 'none';
+    } else {
+        // ถ้าเป็นคนทั่วไป (ยังไม่ล็อกอิน)
+        if (postForm) postForm.style.display = 'none';
+        if (formHr) formHr.style.display = 'none';
+        if (loginSection) loginSection.style.display = 'block';
+    }
+}
+
+// ฟังก์ชันเข้าสู่ระบบ
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('adminEmail').value;
+    const password = document.getElementById('adminPassword').value;
+
+    try {
+        await window.fb.signInWithEmailAndPassword(window.auth, email, password);
+        alert('เข้าสู่ระบบสำเร็จ!');
+        document.getElementById('loginForm').reset();
+    } catch (error) {
+        console.error("Login failed:", error);
+        alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+    }
+}
+
+// ฟังก์ชันออกจากระบบ
+async function handleLogout() {
+    try {
+        await window.fb.signOut(window.auth);
+        alert('ออกจากระบบแล้ว');
+        resetFormState();
+    } catch (error) {
+        console.error("Logout failed:", error);
+    }
+}
+
+// ฟังก์ชันโหลดโพสต์
 async function loadPostsFromCloud() {
     const cardContainer = document.getElementById('cardContainer');
     if (!cardContainer) return;
@@ -21,10 +95,7 @@ async function loadPostsFromCloud() {
     cardContainer.innerHTML = '<p style="text-align:center; color:#78716c;">กำลังโหลดข้อมูล...</p>';
 
     try {
-        if (!window.fb || !window.db) {
-            console.error("Firebase is not initialized");
-            return;
-        }
+        if (!window.fb || !window.db) return;
 
         const postsRef = window.fb.collection(window.db, "posts");
         const q = window.fb.query(postsRef, window.fb.orderBy("timestamp", "desc"));
@@ -48,10 +119,23 @@ async function loadPostsFromCloud() {
     }
 }
 
-// ฟังก์ชันสร้าง Element การ์ดแต่ละอัน (พร้อมปุ่มแก้ไข และ ปุ่มลบ)
+// ฟังก์ชันสร้างการ์ด (แสดงปุ่ม แก้ไข/ลบ เฉพาะเมื่อเป็น Admin)
 function createCardElement(id, data) {
     const card = document.createElement('div');
     card.className = 'card';
+
+    let actionButtons = '';
+    // แสดงปุ่มก็ต่อเมื่อล็อกอินเป็น Admin
+    if (currentUser) {
+        actionButtons = `
+            <div class="card-actions" style="display: flex; gap: 8px;">
+                <button onclick="prepareEditPost('${id}', \`${escapeQuotes(data.title)}\`, \`${escapeQuotes(data.content)}\`, '${data.category}')" 
+                        style="background: #f59e0b; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">แก้ไข</button>
+                <button onclick="deletePost('${id}')" 
+                        style="background: #ef4444; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">ลบ</button>
+            </div>
+        `;
+    }
 
     let imagesHTML = '';
     if (data.images && data.images.length > 0) {
@@ -63,12 +147,7 @@ function createCardElement(id, data) {
     card.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <span class="badge">${data.category || 'ทั่วไป'}</span>
-            <div class="card-actions" style="display: flex; gap: 8px;">
-                <button onclick="prepareEditPost('${id}', \`${escapeQuotes(data.title)}\`, \`${escapeQuotes(data.content)}\`, '${data.category}')" 
-                        style="background: #f59e0b; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">แก้ไข</button>
-                <button onclick="deletePost('${id}')" 
-                        style="background: #ef4444; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;">ลบ</button>
-            </div>
+            ${actionButtons}
         </div>
         <h3>${data.title}</h3>
         <p>${data.content}</p>
@@ -79,13 +158,12 @@ function createCardElement(id, data) {
     return card;
 }
 
-// ฟังก์ชันป้องกันปัญหาข้อความที่มีเครื่องหมายอัญประกาศ
 function escapeQuotes(str) {
     if (!str) return '';
     return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
 }
 
-// ฟังก์ชันบันทึกโพสต์ (รองรับทั้ง เพิ่มใหม่ และ แก้ไข)
+// ฟังก์ชันบันทึกโพสต์
 async function handlePostSubmit(event) {
     event.preventDefault();
 
@@ -110,7 +188,78 @@ async function handlePostSubmit(event) {
 
     try {
         if (editingPostId) {
-            // กรณีโหมดแก้ไขโพสต์เดิม
             const postRef = window.fb.doc(window.db, "posts", editingPostId);
-            const updateData = {
-                title: title,
+            const updateData = { title, content, category };
+            if (images.length > 0) updateData.images = images;
+
+            await window.fb.updateDoc(postRef, updateData);
+            alert('อัปเดตโพสต์เรียบร้อยแล้ว!');
+            resetFormState();
+        } else {
+            const newPost = {
+                title, content, category, images,
+                date: new Date().toLocaleDateString('th-TH'),
+                timestamp: Date.now()
+            };
+
+            await window.fb.addDoc(window.fb.collection(window.db, "posts"), newPost);
+            alert('บันทึกโพสต์ขึ้น Cloud เรียบร้อยแล้ว!');
+            document.getElementById('postForm').reset();
+        }
+
+        loadPostsFromCloud();
+    } catch (error) {
+        console.error("Error saving post: ", error);
+        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล (อาจเนื่องจากสิทธิ์ไม่ถูกต้อง)');
+    }
+}
+
+function prepareEditPost(id, title, content, category) {
+    editingPostId = id;
+    
+    document.getElementById('title').value = title;
+    document.getElementById('content').value = content;
+    if (document.getElementById('category')) {
+        document.getElementById('category').value = category;
+    }
+
+    const submitBtn = document.querySelector('#postForm button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.innerText = 'บันทึกการแก้ไข';
+        submitBtn.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+    }
+
+    document.getElementById('postForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function resetFormState() {
+    editingPostId = null;
+    document.getElementById('postForm').reset();
+    const submitBtn = document.querySelector('#postForm button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.innerText = 'เผยแพร่โพสต์';
+        submitBtn.style.background = 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)';
+    }
+}
+
+async function deletePost(id) {
+    if (!confirm('คุณแน่ใจหรือไม่ว่าต้องการลบโพสต์นี้?')) return;
+
+    try {
+        await window.fb.deleteDoc(window.fb.doc(window.db, "posts", id));
+        alert('ลบโพสต์เรียบร้อยแล้ว!');
+        loadPostsFromCloud();
+    } catch (error) {
+        console.error("Error deleting post: ", error);
+        alert('เกิดข้อผิดพลาดในการลบโพสต์');
+    }
+}
+
+function convertFileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
