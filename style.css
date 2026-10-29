@@ -1,0 +1,355 @@
+/* นำเข้าฟอนต์ Prompt จาก Google Fonts ให้ตัวหนังสือไทยสวยงาม */
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-orange: #f97316;
+    --primary-hover: #ea580c;
+    --orange-light: #fff7ed;
+    --orange-border: #ffedd5;
+    --text-dark: #1c1917;
+    --text-muted: #78716c;
+    --bg-color: #fafaf9;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(249, 115, 22, 0.08);
+    --shadow-lg: 0 10px 25px -5px rgba(234, 88, 12, 0.12);
+    --radius: 12px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 24px 16px;
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 32px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid #f3f4f6;
+}
+
+/* แถบสิทธิ์และปุ่มเข้าสู่ระบบ */
+.role-selector {
+    background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+    padding: 14px 20px;
+    border-radius: 10px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid #fed7aa;
+}
+
+.role-badge {
+    background-color: var(--primary-orange);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.25);
+}
+
+.auth-btn {
+    width: auto;
+    padding: 8px 18px;
+    background-color: #292524;
+    color: white;
+    font-size: 13px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.auth-btn:hover {
+    background-color: #000000;
+    transform: translateY(-1px);
+}
+
+h1 {
+    text-align: center;
+    color: #c2410c;
+    font-size: 26px;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 24px;
+    letter-spacing: -0.5px;
+}
+
+h2 {
+    color: #292524;
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+/* ตกแต่งส่วน Input และ Form Controls */
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #44403c;
+    font-size: 14px;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid #e7e5e4;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    color: var(--text-dark);
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--primary-orange);
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15);
+}
+
+button[type="submit"], button.primary-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(249, 115, 22, 0.25);
+}
+
+button[type="submit"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(249, 115, 22, 0.35);
+}
+
+button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+.cancel-btn {
+    background-color: #a8a29e;
+    margin-top: 10px;
+    box-shadow: none;
+}
+
+.cancel-btn:hover {
+    background-color: #78716c;
+    box-shadow: none;
+}
+
+hr {
+    margin: 36px 0;
+    border: 0;
+    border-top: 2px dashed #ffedd5;
+}
+
+/* การ์ดรายการประสบการณ์ */
+.card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.card {
+    border: 1px solid #f3f4f6;
+    border-radius: var(--radius);
+    padding: 22px;
+    background: #ffffff;
+    position: relative;
+    box-shadow: var(--shadow-md);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 20px rgba(249, 115, 22, 0.12);
+    border-color: #fed7aa;
+}
+
+.card h3 {
+    margin: 12px 0 10px 0;
+    color: #1c1917;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.card p {
+    color: #44403c;
+    line-height: 1.6;
+    font-size: 15px;
+    margin-bottom: 12px;
+}
+
+.action-buttons {
+    float: right;
+    display: flex;
+    gap: 8px;
+}
+
+.delete-btn, .edit-btn {
+    color: white;
+    width: auto;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delete-btn { background-color: #ef4444; }
+.delete-btn:hover { background-color: #dc2626; transform: scale(1.03); }
+.edit-btn { background-color: #f59e0b; }
+.edit-btn:hover { background-color: #d97706; transform: scale(1.03); }
+
+/* แกลเลอรีรูปภาพ */
+.image-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.image-gallery img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 8px;
+    border: 1px solid #f3f4f6;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.image-gallery img:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card .badge {
+    display: inline-block;
+    background: #ffedd5;
+    color: #c2410c;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.card .date {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.author-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    margin-left: 6px;
+    font-weight: 600;
+}
+
+.user-author { background-color: #f5f5f4; color: #44403c; }
+.admin-author { background-color: #ea580c; color: white; }
+
+/* Modal ป๊อปอัปเข้าสู่ระบบ */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(28, 25, 23, 0.65);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content {
+    background-color: #ffffff;
+    margin: 8% auto;
+    padding: 32px;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 420px;
+    position: relative;
+    box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.25);
+    border-top: 6px solid var(--primary-orange);
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.close-btn {
+    position: absolute;
+    right: 18px;
+    top: 14px;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: var(--text-dark);
+}
+
+.switch-link {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.switch-link a {
+    color: var(--primary-orange);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.switch-link a:hover {
+    text-decoration: underline;
+}
+
+/* แอนิเมชันสำหรับ Modal */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
