@@ -2,44 +2,41 @@ let editingPostId = null;
 let currentUser = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // ตรวจสอบสถานะการล็อกอิน
-    setTimeout(() => {
+    // เช็กสถานะการล็อกอิน
+    const checkAuthInterval = setInterval(() => {
         if (window.fb && window.auth) {
+            clearInterval(checkAuthInterval);
             window.fb.onAuthStateChanged(window.auth, (user) => {
                 currentUser = user;
                 updateUIVisibility(user);
                 loadPostsFromCloud();
             });
         }
-    }, 500);
+    }, 100);
 
-    // ผูก Event ฟอร์มโพสต์
+    // ผูก Event Submit
     const postForm = document.getElementById('postForm');
     if (postForm) {
         postForm.addEventListener('submit', handlePostSubmit);
     }
 
-    // ผูก Event เข้าสู่ระบบ
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
-
-    // ปุ่มแสดงฟอร์มล็อกอิน
-    const showLoginBtn = document.getElementById('showLoginBtn');
-    if (showLoginBtn) {
-        showLoginBtn.addEventListener('click', () => {
-            const loginForm = document.getElementById('loginForm');
-            loginForm.style.display = loginForm.style.display === 'none' ? 'block' : 'none';
-        });
-    }
-
-    // ปุ่มออกจากระบบ
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
 });
+
+// ฟังก์ชันสลับแสดง/ซ่อนฟอร์มล็อกอิน
+function toggleLoginForm() {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        if (loginForm.style.display === 'none' || loginForm.style.display === '') {
+            loginForm.style.display = 'block';
+        } else {
+            loginForm.style.display = 'none';
+        }
+    }
+}
 
 // ปรับการแสดงผล UI ตามสถานะล็อกอิน
 function updateUIVisibility(user) {
@@ -48,12 +45,10 @@ function updateUIVisibility(user) {
     const loginSection = document.getElementById('loginSection');
 
     if (user) {
-        // ถ้าเป็น Admin (ล็อกอินแล้ว)
         if (postForm) postForm.style.display = 'block';
         if (formHr) formHr.style.display = 'block';
         if (loginSection) loginSection.style.display = 'none';
     } else {
-        // ถ้าเป็นคนทั่วไป (ยังไม่ล็อกอิน)
         if (postForm) postForm.style.display = 'none';
         if (formHr) formHr.style.display = 'none';
         if (loginSection) loginSection.style.display = 'block';
@@ -125,7 +120,6 @@ function createCardElement(id, data) {
     card.className = 'card';
 
     let actionButtons = '';
-    // แสดงปุ่มก็ต่อเมื่อล็อกอินเป็น Admin
     if (currentUser) {
         actionButtons = `
             <div class="card-actions" style="display: flex; gap: 8px;">
@@ -210,7 +204,7 @@ async function handlePostSubmit(event) {
         loadPostsFromCloud();
     } catch (error) {
         console.error("Error saving post: ", error);
-        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล (อาจเนื่องจากสิทธิ์ไม่ถูกต้อง)');
+        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล (สิทธิ์ไม่ถูกต้อง หรือยังไม่ได้เข้าสู่ระบบ)');
     }
 }
 
