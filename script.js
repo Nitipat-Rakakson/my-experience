@@ -1,17 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // หน่วงเวลาให้โมดูล Firebase โหลดเรียบร้อยก่อนเรียกข้อมูล
+    // โหลดข้อมูลบทความจาก Cloud เมื่อเปิดหน้าเว็บ
     setTimeout(() => {
         loadPostsFromCloud();
     }, 500);
 
-    // ผูก Event ให้ฟอร์มสร้างโพสต์
+    // ดักจับการกดปุ่มส่งฟอร์ม
     const postForm = document.getElementById('postForm');
     if (postForm) {
         postForm.addEventListener('submit', handlePostSubmit);
     }
 });
 
-// ฟังก์ชันดึงโพสต์ทั้งหมดจาก Cloud Database มาแสดงผล
+// ฟังก์ชันดึงโพสต์จาก Firebase Firestore มาแสดง
 async function loadPostsFromCloud() {
     const cardContainer = document.getElementById('cardContainer');
     if (!cardContainer) return;
@@ -19,6 +19,11 @@ async function loadPostsFromCloud() {
     cardContainer.innerHTML = '<p style="text-align:center; color:#78716c;">กำลังโหลดข้อมูล...</p>';
 
     try {
+        if (!window.fb || !window.db) {
+            console.error("Firebase is not initialized");
+            return;
+        }
+
         const postsRef = window.fb.collection(window.db, "posts");
         const q = window.fb.query(postsRef, window.fb.orderBy("timestamp", "desc"));
         const querySnapshot = await window.fb.getDocs(q);
@@ -41,7 +46,7 @@ async function loadPostsFromCloud() {
     }
 }
 
-// ฟังก์ชันสร้างการ์ดแสดงผลบทความแต่ละอัน
+// ฟังก์ชันสร้าง Element การ์ดแต่ละอัน
 function createCardElement(id, data) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -64,7 +69,7 @@ function createCardElement(id, data) {
     return card;
 }
 
-// ฟังก์ชันส่งโพสต์ใหม่ลง Cloud Database
+// ฟังก์ชันบันทึกโพสต์ใหม่ลง Firebase
 async function handlePostSubmit(event) {
     event.preventDefault();
 
@@ -101,7 +106,10 @@ async function handlePostSubmit(event) {
         await window.fb.addDoc(window.fb.collection(window.db, "posts"), newPost);
         alert('บันทึกโพสต์ขึ้น Cloud เรียบร้อยแล้ว!');
         
+        // ล้างฟอร์ม
         document.getElementById('postForm').reset();
+        
+        // โหลดรายการใหม่
         loadPostsFromCloud();
     } catch (error) {
         console.error("Error adding post: ", error);
@@ -109,7 +117,7 @@ async function handlePostSubmit(event) {
     }
 }
 
-// แปลงไฟล์รูปเป็นข้อความ Base64
+// แปลงไฟล์ภาพเป็น Base64 String
 function convertFileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
