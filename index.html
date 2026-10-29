@@ -1,90 +1,33 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Experience Journal - บันทึกประสบการณ์</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<!-- Firebase SDK (Modular Version) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    getDocs, 
+    deleteDoc, 
+    updateDoc, 
+    doc, 
+    query, 
+    orderBy 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    <div class="container">
-        <h1>บันทึกประสบการณ์ของฉัน</h1>
+  const firebaseConfig = {
+    apiKey: "AIzaSyDy7NqsHB6l2loPM7DV1tE5p3y9tYM9EIQ",
+    authDomain: "my-experience-8953f.firebaseapp.com",
+    projectId: "my-experience-8953f",
+    storageBucket: "my-experience-8953f.firebasestorage.app",
+    messagingSenderId: "518198432976",
+    appId: "1:518198432976:web:007a0e6412f2576d5ebad5",
+    measurementId: "G-LQ4KBS1390"
+  };
 
-        <!-- ฟอร์มสำหรับสร้างโพสต์ใหม่ -->
-        <form id="postForm">
-            <h2>สร้างโพสต์ใหม่</h2>
-            
-            <div class="form-group">
-                <label for="title">หัวข้อประสบการณ์</label>
-                <input type="text" id="title" placeholder="เช่น ทริปเที่ยวเชียงใหม่ หรือ ความประทับใจวันนี้..." required>
-            </div>
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-            <div class="form-group">
-                <label for="category">หมวดหมู่</label>
-                <select id="category">
-                    <option value="ท่องเที่ยว">ท่องเที่ยว</option>
-                    <option value="การเรียน">การเรียน</option>
-                    <option value="อาหาร">อาหาร</option>
-                    <option value="ทั่วไป">ทั่วไป</option>
-                </select>
-            </div>
+  window.db = db;
+  window.fb = { collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, orderBy };
+</script>
 
-            <div class="form-group">
-                <label for="content">เนื้อหา / เรื่องราว</label>
-                <textarea id="content" rows="4" placeholder="บอกเล่าเรื่องราวที่น่าสนใจของคุณ..." required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="images">อัปโหลดรูปภาพ</label>
-                <input type="file" id="images" accept="image/*" multiple>
-            </div>
-
-            <button type="submit" class="primary-btn">เผยแพร่โพสต์</button>
-        </form>
-
-        <hr>
-
-        <!-- ส่วนแสดงรายการการ์ดประสบการณ์ -->
-        <h2>รายการประสบการณ์ทั้งหมด</h2>
-        <div id="cardContainer" class="card-container">
-            <p style="text-align:center; color:#78716c;">กำลังโหลดข้อมูล...</p>
-        </div>
-    </div>
-
-    <!-- Firebase SDK (Modular Version) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            getDocs, 
-            deleteDoc, 
-            doc, 
-            query, 
-            orderBy 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // ตั้งค่าการเชื่อมต่อกับ Firebase ของคุณ
-        const firebaseConfig = {
-            apiKey: "AIzaSyDy7NqsHB6l2loPM7DV1tE5p3y9tYM9EIQ",
-            authDomain: "my-experience-8953f.firebaseapp.com",
-            projectId: "my-experience-8953f",
-            storageBucket: "my-experience-8953f.firebasestorage.app",
-            messagingSenderId: "518198432976",
-            appId: "1:518198432976:web:007a0e6412f2576d5ebad5",
-            measurementId: "G-LQ4KBS1390"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // ส่งตัวแปรไปให้ script.js เรียกใช้
-        window.db = db;
-        window.fb = { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy };
-    </script>
-
-    <script src="script.js"></script>
-</body>
-</html>
+<script src="script.js"></script>
