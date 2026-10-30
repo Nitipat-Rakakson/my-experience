@@ -170,20 +170,14 @@ hr {
 
 .image-gallery img {
     width: 100% !important;
-    height: 120px !important; /* ปรับขนาดความสูงให้พอดี ไม่ใหญ่เกินไป */
+    height: 120px !important;
     object-fit: cover !important;
     border-radius: 8px !important;
     border: 1px solid #f3f4f6 !important;
     display: block !important;
 }
 
-/* จัดวางวันที่ด้านล่าง แยกออกจากแกลเลอรี */
+/* ซ่อนส่วนแสดงวันที่ทั้งหมด */
 .card .date {
-    position: static !important;
-    display: block !important;
-    width: 100% !important;
-    clear: both !important;
-    margin-top: 10px !important;
-    color: var(--text-muted) !important;
-    font-size: 12px !important;
+    display: none !important;
 }
