@@ -133,20 +133,20 @@ function createCardElement(id, data) {
 
     let imagesHTML = '';
     if (data.images && data.images.length > 0) {
-        imagesHTML = `<div class="image-gallery">` + 
+        imagesHTML = `<div class="image-gallery" style="margin-bottom: 12px; clear: both;">` + 
             data.images.map(img => `<img src="${img}" alt="รูปภาพ">`).join('') + 
             `</div>`;
     }
 
     card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <span class="badge">${data.category || 'ทั่วไป'}</span>
             ${actionButtons}
         </div>
         <h3>${data.title}</h3>
         <p>${data.content}</p>
         ${imagesHTML}
-        <div class="date">โพสต์เมื่อ: ${data.date || 'ไม่ระบุวันที่'}</div>
+        <div class="date" style="display: block; width: 100%; clear: both; margin-top: 10px; color: #78716c; font-size: 13px;">โพสต์เมื่อ: ${data.date || 'ไม่ระบุวันที่'}</div>
     `;
 
     return card;
@@ -157,7 +157,7 @@ function escapeQuotes(str) {
     return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
 }
 
-// ย่อขนาดรูปเป็นไฟล์เล็กมากๆ แล้วบันทึกลง Firestore โดยตรง (ไม่ต้องใช้ Storage)
+// บีบอัดและอัปโหลดรูปภาพแบบ Base64
 async function handlePostSubmit(event) {
     event.preventDefault();
 
@@ -180,8 +180,6 @@ async function handlePostSubmit(event) {
     let images = [];
     if (imageInput && imageInput.files.length > 0) {
         const files = Array.from(imageInput.files);
-
-        // บีบอัดรูปภาพทุกรูปให้มีขนาดเล็กมากพร้อมๆ กัน
         const processPromises = files.map(file => compressImageToBase64(file, 600, 0.5));
         images = await Promise.all(processPromises);
     }
@@ -218,7 +216,6 @@ async function handlePostSubmit(event) {
     }
 }
 
-// ฟังก์ชันย่อรูปภาพให้เหลือไฟล์ขนาดจิ๋ว (~30-80 KB) ผ่าน Canvas
 function compressImageToBase64(file, maxWidth = 600, quality = 0.5) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -243,7 +240,6 @@ function compressImageToBase64(file, maxWidth = 600, quality = 0.5) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            // คืนค่าเป็น Base64 ที่บีบอัดแล้ว
             const base64String = canvas.toDataURL('image/jpeg', quality);
             resolve(base64String);
         };
