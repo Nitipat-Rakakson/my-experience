@@ -158,31 +158,32 @@ hr {
     font-weight: 600;
 }
 
-/* บังคับแบ่ง 3 คอลัมน์เท่ากันและล็อคความสูงรูปภาพ */
+/* กำหนดรูปภาพแกลเลอรีให้เรียง 3 คอลัมน์สมดุล ขนาดพอดี */
 .image-gallery {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important; /* บังคับ 3 ช่องเท่ากัน */
-    gap: 10px !important;
-    margin: 14px 0 !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+    margin: 12px 0 !important;
     clear: both !important;
     position: static !important;
 }
 
 .image-gallery img {
     width: 100% !important;
-    height: 140px !important; /* ล็อคความสูงเท่ากันทุกรูป */
-    object-fit: cover !important; /* ครอปรูปส่วนเกินให้เต็มช่องสวยงาม */
+    height: 120px !important; /* ปรับขนาดความสูงให้พอดี ไม่ใหญ่เกินไป */
+    object-fit: cover !important;
     border-radius: 8px !important;
     border: 1px solid #f3f4f6 !important;
+    display: block !important;
 }
 
-/* จัดวันที่ให้อยู่ล่างสุด แยกแถวชัดเจน */
+/* จัดวางวันที่ด้านล่าง แยกออกจากแกลเลอรี */
 .card .date {
     position: static !important;
     display: block !important;
     width: 100% !important;
     clear: both !important;
-    margin-top: 12px !important;
+    margin-top: 10px !important;
     color: var(--text-muted) !important;
     font-size: 12px !important;
 }
