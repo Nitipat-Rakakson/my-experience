@@ -9,9 +9,9 @@
 <body>
 
     <div class="container">
-        <h1>บันทึกประสบการณ์ของผม</h1>
+        <h1>บันทึกประสบการณ์ของฉัน</h1>
 
-        <!-- ฟอร์มสร้าง/แก้ไขโพสต์ (ซ่อนไว้ก่อน จะแสดงเมื่อล็อกอินสำเร็จ) -->
+        <!-- ฟอร์มสร้าง/แก้ไขโพสต์ -->
         <form id="postForm" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h2 id="formTitle">สร้างโพสต์ใหม่</h2>
@@ -26,13 +26,10 @@
             <div class="form-group">
                 <label for="category">หมวดหมู่</label>
                 <select id="category">
-                    <option value="การแข่งขัน">การแข่งขัน</option>
-                    <option value="ค่ายวิชาการ">ค่ายวิชาการ</option>
-                    <option value="การอบรม">การอบรม</option>
-                    <option value="จิตอาสา">จิตอาสา</option>
-                    <option value="ผู้นำ">ผู้นำ</option>
                     <option value="ท่องเที่ยว">ท่องเที่ยว</option>
                     <option value="การเรียน">การเรียน</option>
+                    <option value="ค่ายวิชาการ">ค่ายวิชาการ</option>
+                    <option value="การแข่งขัน">การแข่งขัน</option>
                     <option value="อาหาร">อาหาร</option>
                     <option value="ทั่วไป">ทั่วไป</option>
                 </select>
@@ -59,7 +56,7 @@
             <p style="text-align:center; color:#78716c;">กำลังโหลดข้อมูล...</p>
         </div>
 
-        <!-- ส่วนเข้าสู่ระบบสำหรับเจ้าของเว็บ (อยู่ท้ายสุด) -->
+        <!-- ส่วนเข้าสู่ระบบสำหรับเจ้าของเว็บ -->
         <div id="loginSection" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e7e5e4; text-align: center;">
             <button type="button" id="showLoginBtn" style="background: none; border: none; color: #a8a29e; cursor: pointer; font-size: 12px; text-decoration: underline;">จัดการโพสต์ (สำหรับ Admin)</button>
             <form id="loginForm" style="display: none; max-width: 300px; margin: 15px auto; text-align: left;">
@@ -94,6 +91,12 @@
             signOut, 
             onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getStorage, 
+            ref, 
+            uploadBytes, 
+            getDownloadURL 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDy7NqsHB6l2loPM7DV1tE5p3y9tYM9EIQ",
@@ -108,12 +111,15 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
+        const storage = getStorage(app);
 
         window.db = db;
         window.auth = auth;
+        window.storage = storage;
         window.fb = { 
             collection, addDoc, getDocs, deleteDoc, updateDoc, doc, query, orderBy,
-            signInWithEmailAndPassword, signOut, onAuthStateChanged
+            signInWithEmailAndPassword, signOut, onAuthStateChanged,
+            ref, uploadBytes, getDownloadURL
         };
     </script>
 
