@@ -133,7 +133,7 @@ function createCardElement(id, data) {
 
     let imagesHTML = '';
     if (data.images && data.images.length > 0) {
-        imagesHTML = `<div class="image-gallery" style="margin-bottom: 12px; clear: both;">` + 
+        imagesHTML = `<div class="image-gallery">` + 
             data.images.map(img => `<img src="${img}" alt="รูปภาพ">`).join('') + 
             `</div>`;
     }
@@ -146,7 +146,7 @@ function createCardElement(id, data) {
         <h3>${data.title}</h3>
         <p>${data.content}</p>
         ${imagesHTML}
-        <div class="date" style="display: block; width: 100%; clear: both; margin-top: 10px; color: #78716c; font-size: 13px;">โพสต์เมื่อ: ${data.date || 'ไม่ระบุวันที่'}</div>
+        <div class="date">โพสต์เมื่อ: ${data.date || 'ไม่ระบุวันที่'}</div>
     `;
 
     return card;
