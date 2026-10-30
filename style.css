@@ -178,3 +178,29 @@ hr {
     font-size: 13px;
     margin-top: 6px;
 }
+/* บังคับแยกแถบรูปภาพและวันที่ให้ไม่ซ้อนทับกัน */
+.image-gallery {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    margin: 12px 0 !important;
+    clear: both !important;
+    position: static !important;
+}
+
+.image-gallery img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    object-fit: cover !important;
+}
+
+.card .date {
+    position: static !important; /* ปล่อยให้เรียงตามลำดับปกติ ไม่ลอยทับ */
+    display: block !important;
+    width: 100% !important;
+    clear: both !important;
+    margin-top: 12px !important;
+    color: #78716c !important;
+    font-size: 12px !important;
+}
