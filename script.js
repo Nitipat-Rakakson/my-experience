@@ -139,7 +139,7 @@ function createCardElement(id, data) {
     }
 
     card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align- items: center;">
             <span class="badge">${data.category || 'ทั่วไป'}</span>
             ${actionButtons}
         </div>
@@ -157,7 +157,7 @@ function escapeQuotes(str) {
     return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
 }
 
-// ย่อขนาดรูปภาพก่อนอัปโหลดเข้า Storage
+// อัปโหลดรูปภาพแบบขนาน (Parallel Upload) เพื่อความเร็วสูงสุด
 async function handlePostSubmit(event) {
     event.preventDefault();
 
@@ -174,27 +174,33 @@ async function handlePostSubmit(event) {
     const category = categoryInput ? categoryInput.value : 'ทั่วไป';
     
     const originalBtnText = submitBtn.innerText;
-    submitBtn.innerText = 'กำลังย่อขนาดรูปและอัปโหลด...';
+    submitBtn.innerText = 'กำลังประมวลผลและอัปโหลด...';
     submitBtn.disabled = true;
 
     let imageUrls = [];
     if (imageInput && imageInput.files.length > 0) {
-        for (let file of imageInput.files) {
+        const files = Array.from(imageInput.files);
+
+        // ทำการย่อขนาดและอัปโหลดรูปภาพทุกรูปพร้อมกัน (Parallel)
+        const uploadPromises = files.map(async (file, index) => {
             try {
-                // 1. บีบอัดย่อขนาดรูปบนเครื่องผู้ใช้ก่อนส่ง
-                const resizedBlob = await resizeImageToBlob(file, 1024, 0.7);
+                // 1. ย่อขนาดรูปภาพอย่างรวดเร็วผ่าน Object URL
+                const resizedBlob = await resizeImageToBlobFast(file, 800, 0.6);
                 
-                // 2. ส่งไฟล์ Blob ที่ย่อแล้วไปยัง Storage
-                const fileName = `images/${Date.now()}_compressed.jpg`;
+                // 2. ส่งขึ้น Firebase Storage
+                const fileName = `images/${Date.now()}_${index}_compressed.jpg`;
                 const storageRef = window.fb.ref(window.storage, fileName);
                 
                 await window.fb.uploadBytes(storageRef, resizedBlob);
-                const downloadURL = await window.fb.getDownloadURL(storageRef);
-                imageUrls.push(downloadURL);
+                return await window.fb.getDownloadURL(storageRef);
             } catch (err) {
-                console.error("Upload image error:", err);
+                console.error(`Upload error on file ${index}:`, err);
+                return null;
             }
-        }
+        });
+
+        const results = await Promise.all(uploadPromises);
+        imageUrls = results.filter(url => url !== null);
     }
 
     try {
@@ -229,41 +235,44 @@ async function handlePostSubmit(event) {
     }
 }
 
-// ฟังก์ชันแปลงและย่อรูปเป็น Blob ไฟล์เล็ก
-function resizeImageToBlob(file, maxWidth = 1024, quality = 0.7) {
+// ฟังก์ชันย่อรูปภาพความเร็วสูง (High Performance Compression)
+function resizeImageToBlobFast(file, maxWidth = 800, quality = 0.6) {
     return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        img.src = objectUrl;
 
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
+        img.onload = () => {
+            URL.revokeObjectURL(objectUrl); // คืนค่าหน่วยความจำทันที
+
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error("Canvas compression failed"));
                 }
-
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                canvas.toBlob((blob) => {
-                    if (blob) {
-                        resolve(blob);
-                    } else {
-                        reject(new Error("Canvas toBlob failed"));
-                    }
-                }, 'image/jpeg', quality);
-            };
-            img.onerror = (err) => reject(err);
+            }, 'image/jpeg', quality);
         };
-        reader.onerror = (err) => reject(err);
+
+        img.onerror = (err) => {
+            URL.revokeObjectURL(objectUrl);
+            reject(err);
+        };
     });
 }
 
