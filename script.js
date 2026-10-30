@@ -162,7 +162,7 @@ function escapeQuotes(str) {
     return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
 }
 
-// ฟังก์ชันบันทึกโพสต์
+// ฟังก์ชันบันทึกโพสต์ (พร้อมการย่อรูปอัตโนมัติก่อนส่ง)
 async function handlePostSubmit(event) {
     event.preventDefault();
 
@@ -170,6 +170,7 @@ async function handlePostSubmit(event) {
     const contentInput = document.getElementById('content');
     const categoryInput = document.getElementById('category');
     const imageInput = document.getElementById('images');
+    const submitBtn = document.querySelector('#postForm button[type="submit"]');
 
     if (!titleInput || !contentInput) return;
 
@@ -177,11 +178,21 @@ async function handlePostSubmit(event) {
     const content = contentInput.value;
     const category = categoryInput ? categoryInput.value : 'ทั่วไป';
     
+    // เปลี่ยนข้อความปุ่มเพื่อแจ้งสถานะ
+    const originalBtnText = submitBtn.innerText;
+    submitBtn.innerText = 'กำลังประมวลผลรูปภาพและบันทึก...';
+    submitBtn.disabled = true;
+
     let images = [];
     if (imageInput && imageInput.files.length > 0) {
         for (let file of imageInput.files) {
-            const base64 = await convertFileToBase64(file);
-            images.push(base64);
+            try {
+                // ย่อขนาดรูปภาพก่อนแปลงเป็น Base64
+                const resizedBase64 = await resizeImage(file, 1024, 0.7);
+                images.push(resizedBase64);
+            } catch (err) {
+                console.error("Image resize error:", err);
+            }
         }
     }
 
@@ -209,8 +220,45 @@ async function handlePostSubmit(event) {
         loadPostsFromCloud();
     } catch (error) {
         console.error("Error saving post: ", error);
-        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล (สิทธิ์ไม่ถูกต้อง หรือยังไม่ได้เข้าสู่ระบบ)');
+        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล (อาจเป็นเพราะขนาดรูปภาพยังใหญ่เกินไป หรือสิทธิ์ไม่ถูกต้อง)');
+    } finally {
+        submitBtn.innerText = originalBtnText;
+        submitBtn.disabled = false;
     }
+}
+
+// ฟังก์ชันย่อขนาดรูปภาพ (Resize Image)
+function resizeImage(file, maxWidth = 1024, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('canvas');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // คืนค่าไฟล์รูปที่ย่อแล้วในรูปแบบ Base64
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                resolve(dataUrl);
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
 }
 
 function prepareEditPost(id, title, content, category) {
@@ -252,13 +300,4 @@ async function deletePost(id) {
         console.error("Error deleting post: ", error);
         alert('เกิดข้อผิดพลาดในการลบโพสต์');
     }
-}
-
-function convertFileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
 }
