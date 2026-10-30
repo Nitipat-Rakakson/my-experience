@@ -157,7 +157,7 @@ function escapeQuotes(str) {
     return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
 }
 
-// อัปโหลดรูปขึ้น Firebase Storage
+// ย่อขนาดรูปภาพก่อนอัปโหลดเข้า Storage
 async function handlePostSubmit(event) {
     event.preventDefault();
 
@@ -174,19 +174,21 @@ async function handlePostSubmit(event) {
     const category = categoryInput ? categoryInput.value : 'ทั่วไป';
     
     const originalBtnText = submitBtn.innerText;
-    submitBtn.innerText = 'กำลังอัปโหลดรูปภาพขึ้น Cloud...';
+    submitBtn.innerText = 'กำลังย่อขนาดรูปและอัปโหลด...';
     submitBtn.disabled = true;
 
     let imageUrls = [];
     if (imageInput && imageInput.files.length > 0) {
         for (let file of imageInput.files) {
             try {
-                // สร้างชื่อไฟล์ไม่ให้ซ้ำกัน
-                const fileName = `images/${Date.now()}_${file.name}`;
+                // 1. บีบอัดย่อขนาดรูปบนเครื่องผู้ใช้ก่อนส่ง
+                const resizedBlob = await resizeImageToBlob(file, 1024, 0.7);
+                
+                // 2. ส่งไฟล์ Blob ที่ย่อแล้วไปยัง Storage
+                const fileName = `images/${Date.now()}_compressed.jpg`;
                 const storageRef = window.fb.ref(window.storage, fileName);
                 
-                // อัปโหลดไปยัง Firebase Storage
-                await window.fb.uploadBytes(storageRef, file);
+                await window.fb.uploadBytes(storageRef, resizedBlob);
                 const downloadURL = await window.fb.getDownloadURL(storageRef);
                 imageUrls.push(downloadURL);
             } catch (err) {
@@ -225,6 +227,44 @@ async function handlePostSubmit(event) {
         submitBtn.innerText = originalBtnText;
         submitBtn.disabled = false;
     }
+}
+
+// ฟังก์ชันแปลงและย่อรูปเป็น Blob ไฟล์เล็ก
+function resizeImageToBlob(file, maxWidth = 1024, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error("Canvas toBlob failed"));
+                    }
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
 }
 
 function prepareEditPost(id, title, content, category) {
