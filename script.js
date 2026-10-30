@@ -146,7 +146,6 @@ function createCardElement(id, data) {
         <h3>${data.title}</h3>
         <p>${data.content}</p>
         ${imagesHTML}
-        <div class="date">โพสต์เมื่อ: ${data.date || 'ไม่ระบุวันที่'}</div>
     `;
 
     return card;
