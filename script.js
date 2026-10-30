@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ปรับการแสดงผล UI ตามสถานะล็อกอิน
 function updateUIVisibility(user) {
     const postForm = document.getElementById('postForm');
     const formHr = document.getElementById('formHr');
@@ -60,7 +59,6 @@ function updateUIVisibility(user) {
     }
 }
 
-// ฟังก์ชันเข้าสู่ระบบ
 async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('adminEmail').value;
@@ -76,7 +74,6 @@ async function handleLogin(e) {
     }
 }
 
-// ฟังก์ชันออกจากระบบ
 async function handleLogout() {
     try {
         await window.fb.signOut(window.auth);
@@ -87,7 +84,6 @@ async function handleLogout() {
     }
 }
 
-// ฟังก์ชันโหลดโพสต์
 async function loadPostsFromCloud() {
     const cardContainer = document.getElementById('cardContainer');
     if (!cardContainer) return;
@@ -119,7 +115,6 @@ async function loadPostsFromCloud() {
     }
 }
 
-// ฟังก์ชันสร้างการ์ด (แสดงปุ่ม แก้ไข/ลบ เฉพาะเมื่อเป็น Admin)
 function createCardElement(id, data) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -162,7 +157,7 @@ function escapeQuotes(str) {
     return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
 }
 
-// ฟังก์ชันบันทึกโพสต์ (พร้อมการย่อรูปอัตโนมัติก่อนส่ง)
+// อัปโหลดรูปขึ้น Firebase Storage
 async function handlePostSubmit(event) {
     event.preventDefault();
 
@@ -178,20 +173,24 @@ async function handlePostSubmit(event) {
     const content = contentInput.value;
     const category = categoryInput ? categoryInput.value : 'ทั่วไป';
     
-    // เปลี่ยนข้อความปุ่มเพื่อแจ้งสถานะ
     const originalBtnText = submitBtn.innerText;
-    submitBtn.innerText = 'กำลังประมวลผลรูปภาพและบันทึก...';
+    submitBtn.innerText = 'กำลังอัปโหลดรูปภาพขึ้น Cloud...';
     submitBtn.disabled = true;
 
-    let images = [];
+    let imageUrls = [];
     if (imageInput && imageInput.files.length > 0) {
         for (let file of imageInput.files) {
             try {
-                // ย่อขนาดรูปภาพก่อนแปลงเป็น Base64
-                const resizedBase64 = await resizeImage(file, 1024, 0.7);
-                images.push(resizedBase64);
+                // สร้างชื่อไฟล์ไม่ให้ซ้ำกัน
+                const fileName = `images/${Date.now()}_${file.name}`;
+                const storageRef = window.fb.ref(window.storage, fileName);
+                
+                // อัปโหลดไปยัง Firebase Storage
+                await window.fb.uploadBytes(storageRef, file);
+                const downloadURL = await window.fb.getDownloadURL(storageRef);
+                imageUrls.push(downloadURL);
             } catch (err) {
-                console.error("Image resize error:", err);
+                console.error("Upload image error:", err);
             }
         }
     }
@@ -200,65 +199,32 @@ async function handlePostSubmit(event) {
         if (editingPostId) {
             const postRef = window.fb.doc(window.db, "posts", editingPostId);
             const updateData = { title, content, category };
-            if (images.length > 0) updateData.images = images;
+            if (imageUrls.length > 0) updateData.images = imageUrls;
 
             await window.fb.updateDoc(postRef, updateData);
             alert('อัปเดตโพสต์เรียบร้อยแล้ว!');
             resetFormState();
         } else {
             const newPost = {
-                title, content, category, images,
+                title, content, category, 
+                images: imageUrls,
                 date: new Date().toLocaleDateString('th-TH'),
                 timestamp: Date.now()
             };
 
             await window.fb.addDoc(window.fb.collection(window.db, "posts"), newPost);
-            alert('บันทึกโพสต์ขึ้น Cloud เรียบร้อยแล้ว!');
+            alert('บันทึกโพสต์เรียบร้อยแล้ว!');
             document.getElementById('postForm').reset();
         }
 
         loadPostsFromCloud();
     } catch (error) {
         console.error("Error saving post: ", error);
-        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล (อาจเป็นเพราะขนาดรูปภาพยังใหญ่เกินไป หรือสิทธิ์ไม่ถูกต้อง)');
+        alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
     } finally {
         submitBtn.innerText = originalBtnText;
         submitBtn.disabled = false;
     }
-}
-
-// ฟังก์ชันย่อขนาดรูปภาพ (Resize Image)
-function resizeImage(file, maxWidth = 1024, quality = 0.7) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                let width = img.width;
-                let height = img.height;
-
-                if (width > maxWidth) {
-                    height = Math.round((height * maxWidth) / width);
-                    width = maxWidth;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-
-                const ctx = canvas.getContext('canvas');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                // คืนค่าไฟล์รูปที่ย่อแล้วในรูปแบบ Base64
-                const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                resolve(dataUrl);
-            };
-            img.onerror = (err) => reject(err);
-        };
-        reader.onerror = (err) => reject(err);
-    });
 }
 
 function prepareEditPost(id, title, content, category) {
