@@ -139,7 +139,7 @@ function createCardElement(id, data) {
     }
 
     card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align- items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
             <span class="badge">${data.category || 'ทั่วไป'}</span>
             ${actionButtons}
         </div>
@@ -157,7 +157,7 @@ function escapeQuotes(str) {
     return str.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
 }
 
-// อัปโหลดรูปภาพแบบขนาน (Parallel Upload) เพื่อความเร็วสูงสุด
+// ย่อขนาดรูปเป็นไฟล์เล็กมากๆ แล้วบันทึกลง Firestore โดยตรง (ไม่ต้องใช้ Storage)
 async function handlePostSubmit(event) {
     event.preventDefault();
 
@@ -174,40 +174,23 @@ async function handlePostSubmit(event) {
     const category = categoryInput ? categoryInput.value : 'ทั่วไป';
     
     const originalBtnText = submitBtn.innerText;
-    submitBtn.innerText = 'กำลังประมวลผลและอัปโหลด...';
+    submitBtn.innerText = 'กำลังบีบอัดรูปภาพและบันทึก...';
     submitBtn.disabled = true;
 
-    let imageUrls = [];
+    let images = [];
     if (imageInput && imageInput.files.length > 0) {
         const files = Array.from(imageInput.files);
 
-        // ทำการย่อขนาดและอัปโหลดรูปภาพทุกรูปพร้อมกัน (Parallel)
-        const uploadPromises = files.map(async (file, index) => {
-            try {
-                // 1. ย่อขนาดรูปภาพอย่างรวดเร็วผ่าน Object URL
-                const resizedBlob = await resizeImageToBlobFast(file, 800, 0.6);
-                
-                // 2. ส่งขึ้น Firebase Storage
-                const fileName = `images/${Date.now()}_${index}_compressed.jpg`;
-                const storageRef = window.fb.ref(window.storage, fileName);
-                
-                await window.fb.uploadBytes(storageRef, resizedBlob);
-                return await window.fb.getDownloadURL(storageRef);
-            } catch (err) {
-                console.error(`Upload error on file ${index}:`, err);
-                return null;
-            }
-        });
-
-        const results = await Promise.all(uploadPromises);
-        imageUrls = results.filter(url => url !== null);
+        // บีบอัดรูปภาพทุกรูปให้มีขนาดเล็กมากพร้อมๆ กัน
+        const processPromises = files.map(file => compressImageToBase64(file, 600, 0.5));
+        images = await Promise.all(processPromises);
     }
 
     try {
         if (editingPostId) {
             const postRef = window.fb.doc(window.db, "posts", editingPostId);
             const updateData = { title, content, category };
-            if (imageUrls.length > 0) updateData.images = imageUrls;
+            if (images.length > 0) updateData.images = images;
 
             await window.fb.updateDoc(postRef, updateData);
             alert('อัปเดตโพสต์เรียบร้อยแล้ว!');
@@ -215,7 +198,7 @@ async function handlePostSubmit(event) {
         } else {
             const newPost = {
                 title, content, category, 
-                images: imageUrls,
+                images: images,
                 date: new Date().toLocaleDateString('th-TH'),
                 timestamp: Date.now()
             };
@@ -235,15 +218,15 @@ async function handlePostSubmit(event) {
     }
 }
 
-// ฟังก์ชันย่อรูปภาพความเร็วสูง (High Performance Compression)
-function resizeImageToBlobFast(file, maxWidth = 800, quality = 0.6) {
+// ฟังก์ชันย่อรูปภาพให้เหลือไฟล์ขนาดจิ๋ว (~30-80 KB) ผ่าน Canvas
+function compressImageToBase64(file, maxWidth = 600, quality = 0.5) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         const objectUrl = URL.createObjectURL(file);
         img.src = objectUrl;
 
         img.onload = () => {
-            URL.revokeObjectURL(objectUrl); // คืนค่าหน่วยความจำทันที
+            URL.revokeObjectURL(objectUrl);
 
             const canvas = document.createElement('canvas');
             let width = img.width;
@@ -260,13 +243,9 @@ function resizeImageToBlobFast(file, maxWidth = 800, quality = 0.6) {
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
 
-            canvas.toBlob((blob) => {
-                if (blob) {
-                    resolve(blob);
-                } else {
-                    reject(new Error("Canvas compression failed"));
-                }
-            }, 'image/jpeg', quality);
+            // คืนค่าเป็น Base64 ที่บีบอัดแล้ว
+            const base64String = canvas.toDataURL('image/jpeg', quality);
+            resolve(base64String);
         };
 
         img.onerror = (err) => {
